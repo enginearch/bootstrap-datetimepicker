@@ -14,7 +14,7 @@ SO: http://stackoverflow.com/tags/eonasdan-datetimepicker
 
 New issues that are requests for "how do I.." will be closed and redirected to Stack Overflow.
 
-# v4.17.38
+# v4.17.39
 
 Is the current stable release. The latest and greatest changes are available from the [development branch](https://github.com/Eonasdan/bootstrap-datetimepicker/tree/development)
 

@@ -1,6 +1,6 @@
 # Version 4
 
-## 4.17.38
+## 4.17.39
 
 ### New Features
 

@@ -1,4 +1,4 @@
-/*! version : 4.17.38
+/*! version : 4.17.39
  =========================================================
  bootstrap-datetimejs
  https://github.com/Eonasdan/bootstrap-datetimepicker
@@ -65,7 +65,6 @@
             component = false,
             widget = false,
             use24Hours,
-            appendToBody,
             minViewModeNumber = 0,
             actualFormat,
             parseFormats,
@@ -409,6 +408,22 @@
                 return dataOptions;
             },
 
+            // computeWidgetPosition = function() {
+            //   var position = (component || element).position(),
+            //       offset = (component || element).offset(),
+            //       vertical = options.widgetPositioning.vertical,
+            //       horizontal = options.widgetPositioning.horizontal,
+            //       parent = $('body');
+            //   // offset.top = (component || element).offset().top
+            //   $(widget).css({
+            //     top: vertical === 'top' ? 'auto' : offset.top + element.outerHeight(),
+            //     bottom: vertical === 'top' ? offset.top + element.outerHeight() : 'auto',
+            //     left: horizontal === 'left' ? (parent === element ? 0 : offset.left) : 'auto',
+            //     right: horizontal === 'left' ? 'auto' : parent.outerWidth() - element.outerWidth() - (parent === element ? 0 : offset.left),
+            //     position: 'absolute'
+            //   });
+            // },
+
             place = function () {
                 var position = (component || element).position(),
                     offset = (component || element).offset(),
@@ -418,35 +433,16 @@
                     parent;
 
 
+
                 if (toBody) {
-                  if ((component || element).scrollParent() != $('body')) {
-                    offset.top = (component || element).offset().top - (component || element).scrollParent().scrollTop()
-                  }
-                  if (options.widgetParent) {
-                      parent = options.widgetParent
-                  } else if (element.is('input')) {
-                      parent = element.parent();
-                  } else if (options.inline) {
-                      parent = element;
-                      return;
+                  if ((component || element).parents('.modal').length > 0) {
+                    parent = (component || element).parents('.modal')
+                    offset.top = offset.top + (component || element).scrollParent().scrollTop()
                   } else {
-                      parent = element;
+                    parent = $('body')
+                    parent.css({position: 'relative'});
                   }
-
-                  $('body').append(widget)
-
-                  window.addEventListener('scroll', function() {
-                    position = (component || element).position(),
-                    offset = (component || element).offset(),
-                    offset.top = (component || element).offset().top - (component || element).scrollParent().scrollTop()
-                    $(widget).css({
-                      top: vertical === 'top' ? 'auto' : offset.top + element.outerHeight(),
-                      bottom: vertical === 'top' ? offset.top + element.outerHeight() : 'auto',
-                      left: horizontal === 'left' ? (parent === element ? 0 : offset.left) : 'auto',
-                      right: horizontal === 'left' ? 'auto' : parent.outerWidth() - element.outerWidth() - (parent === element ? 0 : offset.left),
-                      position: 'absolute'
-                    });
-                  });
+                  parent.append(widget)
 
                 } else {
                   if (options.widgetParent) {
@@ -495,7 +491,7 @@
                 }
 
                 // find the first parent element that has a relative css positioning
-                if (parent.css('position') !== 'relative') {
+                if (['fixed', 'relative'].indexOf(parent.css('position')) == -1) {
                     parent = parent.parents().filter(function () {
                         return $(this).css('position') === 'relative';
                     }).first();
@@ -957,6 +953,8 @@
                 widget.hide();
 
                 $(window).off('resize', place);
+                // $(component || element).parents(':not(.modal-content)').off('scroll', computeWidgetPosition);
+                $(component || element).parents(':not(.modal)').off('scroll', hide);
                 widget.off('click', '[data-action]');
                 widget.off('mousedown', false);
 
@@ -1261,6 +1259,11 @@
                 }
                 widget.show();
                 place();
+
+                // $(component || element).parents().on('scroll', computeWidgetPosition);
+                if (options.appendToBody) {
+                  $(component || element).parents(':not(.modal)').on('scroll', hide);
+                }
 
                 if (options.focusOnShow && !input.is(':focus')) {
                     input.focus();
