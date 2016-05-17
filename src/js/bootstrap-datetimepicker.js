@@ -1,4 +1,4 @@
-/*! version : 4.17.37
+/*! version : 4.17.38
  =========================================================
  bootstrap-datetimejs
  https://github.com/Eonasdan/bootstrap-datetimepicker
@@ -65,6 +65,7 @@
             component = false,
             widget = false,
             use24Hours,
+            appendToBody,
             minViewModeNumber = 0,
             actualFormat,
             parseFormats,
@@ -413,18 +414,52 @@
                     offset = (component || element).offset(),
                     vertical = options.widgetPositioning.vertical,
                     horizontal = options.widgetPositioning.horizontal,
+                    toBody = options.appendToBody,
                     parent;
 
-                if (options.widgetParent) {
-                    parent = options.widgetParent.append(widget);
-                } else if (element.is('input')) {
-                    parent = element.after(widget).parent();
-                } else if (options.inline) {
-                    parent = element.append(widget);
-                    return;
+
+                if (toBody) {
+                  if ((component || element).scrollParent() != $('body')) {
+                    offset.top = (component || element).offset().top - (component || element).scrollParent().scrollTop()
+                  }
+                  if (options.widgetParent) {
+                      parent = options.widgetParent
+                  } else if (element.is('input')) {
+                      parent = element.parent();
+                  } else if (options.inline) {
+                      parent = element;
+                      return;
+                  } else {
+                      parent = element;
+                  }
+
+                  $('body').append(widget)
+
+                  window.addEventListener('scroll', function() {
+                    position = (component || element).position(),
+                    offset = (component || element).offset(),
+                    offset.top = (component || element).offset().top - (component || element).scrollParent().scrollTop()
+                    $(widget).css({
+                      top: vertical === 'top' ? 'auto' : offset.top + element.outerHeight(),
+                      bottom: vertical === 'top' ? offset.top + element.outerHeight() : 'auto',
+                      left: horizontal === 'left' ? (parent === element ? 0 : offset.left) : 'auto',
+                      right: horizontal === 'left' ? 'auto' : parent.outerWidth() - element.outerWidth() - (parent === element ? 0 : offset.left),
+                      position: 'absolute'
+                    });
+                  });
+
                 } else {
-                    parent = element;
-                    element.children().first().after(widget);
+                  if (options.widgetParent) {
+                      parent = options.widgetParent.append(widget);
+                  } else if (element.is('input')) {
+                      parent = element.after(widget).parent();
+                  } else if (options.inline) {
+                      parent = element.append(widget);
+                      return;
+                  } else {
+                      parent = element;
+                      element.children().first().after(widget);
+                  }
                 }
 
                 // Top and bottom logic
@@ -470,12 +505,22 @@
                     throw new Error('datetimepicker component should be placed within a relative positioned container');
                 }
 
-                widget.css({
+                if (toBody) {
+                  widget.css({
+                    top: vertical === 'top' ? 'auto' : offset.top + element.outerHeight(),
+                    bottom: vertical === 'top' ? offset.top + element.outerHeight() : 'auto',
+                    left: horizontal === 'left' ? (parent === element ? 0 : offset.left) : 'auto',
+                    right: horizontal === 'left' ? 'auto' : parent.outerWidth() - element.outerWidth() - (parent === element ? 0 : offset.left),
+                    position: 'absolute'
+                  });
+                } else {
+                  widget.css({
                     top: vertical === 'top' ? 'auto' : position.top + element.outerHeight(),
                     bottom: vertical === 'top' ? position.top + element.outerHeight() : 'auto',
                     left: horizontal === 'left' ? (parent === element ? 0 : position.left) : 'auto',
-                    right: horizontal === 'left' ? 'auto' : parent.outerWidth() - element.outerWidth() - (parent === element ? 0 : position.left)
-                });
+                    right: horizontal === 'left' ? 'auto' : parent.outerWidth() - element.outerWidth() - (parent === element ? 0 : position.left),
+                  })
+                }
             },
 
             notifyEvent = function (e) {
@@ -1533,6 +1578,16 @@
             return picker;
         };
 
+        picker.appendToBody = function (newVal) {
+            if (arguments.length === 0) {
+                return options.appendToBody;
+            }
+
+            options.appendToBody = newVal;
+
+            return picker;
+        };
+
         picker.dayViewHeaderFormat = function (newFormat) {
             if (arguments.length === 0) {
                 return options.dayViewHeaderFormat;
@@ -2367,6 +2422,7 @@
     };
 
     $.fn.datetimepicker.defaults = {
+        appendToBody: true,
         timeZone: 'Etc/UTC',
         format: false,
         dayViewHeaderFormat: 'MMMM YYYY',
